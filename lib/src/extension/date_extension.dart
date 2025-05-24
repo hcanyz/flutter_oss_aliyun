@@ -40,4 +40,18 @@ extension DateExtension on DateTime {
   int secondsSinceEpoch() {
     return (millisecondsSinceEpoch / 1000).floor();
   }
+
+  /// "${DateFormat('yyyyMMddTHHmmss').format(DateTime.now())}Z" need intl
+  String toOssIso8601String() {
+    return "${yyyyMMdd()}T${hour.padTime(2)}${minute.padTime(2)}${second.padTime(2)}Z";
+  }
+
+  /// DateFormat('yyyyMMdd').format(DateTime.now()) need intl
+  String yyyyMMdd() {
+    return "$year${month.padTime(2)}${day.padTime(2)}";
+  }
+}
+
+extension on int {
+  String padTime(width) => "$this".padLeft(width, "0");
 }
