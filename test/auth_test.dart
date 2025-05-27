@@ -3,7 +3,8 @@ import 'package:flutter_oss_aliyun/src/model/request.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('test the put object in Client', () async {
+  setUpAll(() {});
+  test('test v4 signature', () async {
     final auth = Auth(
         accessKey: 'LTAI****************',
         accessSecret: 'yourAccessKeySecret',
@@ -19,7 +20,10 @@ void main() {
       'content-type': 'text/plain',
       'x-oss-date': 'text/plain',
     });
-    auth.sign(req, 'examplebucket', 'exampleobject');
-    expect(req.headers['Authorization'], '200');
+    auth.sign(req, 'examplebucket', 'exampleobject',
+        date: DateTime.tryParse('20250411T064124Z'));
+    print(req.headers['Authorization']);
+    expect(req.headers['Authorization'],
+        'OSS4-HMAC-SHA256 Credential=LTAI****************/20250411/cn-hangzhou/oss/aliyun_v4_request, AdditionalHeaders=content-disposition;content-length, Signature=d3694c2dfc5371ee6acd35e88c4871ac95a7ba01d3a2f476768fe61218590097');
   });
 }

@@ -35,6 +35,11 @@ class Auth {
       accessSecret: json['AccessKeySecret'] as String,
       secureToken: json['SecurityToken'] as String,
       expire: json['Expiration'] as String,
+      signatureVersion: json['SignatureVersion'] != null
+          ? SignatureVersion.values
+              .asNameMap()[json['SignatureVersion'] as String]!
+          : SignatureVersion.v1,
+      region: json['Region'] as String?,
     );
   }
 
@@ -46,10 +51,10 @@ class Auth {
   /// [req] include the request headers information that use for auth.
   /// [bucket] is the name of bucket used in aliyun oss
   /// [key] is the object name in aliyun oss, alias the 'filepath/filename'
-  void sign(HttpRequest req, String bucket, String key) {
+  void sign(HttpRequest req, String bucket, String key, {DateTime? date}) {
     req.headers['Authorization'] = signatureVersion == SignatureVersion.v1
         ? _makeSignatureV1(req, bucket, key)
-        : _makeSignatureV4(req, bucket, key);
+        : _makeSignatureV4(req, bucket, key, date: date);
   }
 
   /// the signature of file
@@ -140,17 +145,16 @@ class Auth {
   }
 
   /// see https://help.aliyun.com/zh/oss/developer-reference/recommend-to-use-signature-version-4
-  String _makeSignatureV4(HttpRequest req, String bucket, String fileKey) {
+  String _makeSignatureV4(HttpRequest req, String bucket, String fileKey,
+      {DateTime? date}) {
     final region = this.region;
     if (region == null) {
       throw ArgumentError("v4 signature Auth must have region");
     }
 
-    // final now = DateTime.now().toUtc();
-    // final signDateIso8601 = now.toOssIso8601String();
-    // final signDate = now.yyyyMMdd();
-    final signDateIso8601 = '20250411T064124Z';
-    final signDate = '20250411';
+    final time = date ?? DateTime.now().toUtc();
+    final signDateIso8601 = time.toOssIso8601String();
+    final signDate = time.yyyyMMdd();
     const hashedPayLoad = 'UNSIGNED-PAYLOAD';
 
     req.headers['x-oss-content-sha256'] = hashedPayLoad;
@@ -173,7 +177,7 @@ class Auth {
 
     String path = '/';
     if (bucket.isNotEmpty) path += '$bucket/';
-    if (fileKey.isNotEmpty) path += Uri.decodeComponent(fileKey);
+    if (fileKey.isNotEmpty) path += fileKey;
 
     final canonicalUri = path;
 
